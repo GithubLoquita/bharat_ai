@@ -55,7 +55,7 @@ export function StudioModule({ user }: { user: any }) {
       <div className="w-full md:w-80 border-r border-white/5 p-8 flex flex-col space-y-10 overflow-y-auto shrink-0 bg-white/[0.02]">
         <div className="space-y-3">
           <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/20 flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-brand" /> PARAMETERS
+            <Sliders className="w-4 h-4 text-white" /> PARAMETERS
           </h2>
         </div>
 
@@ -63,12 +63,12 @@ export function StudioModule({ user }: { user: any }) {
           <div className="space-y-4">
             <div className="flex justify-between items-center px-1">
               <label className="text-xs font-semibold text-white/40">Temperature</label>
-              <span className="text-[11px] font-mono text-brand bg-brand/10 px-2.5 py-1 rounded-lg">{temperature}</span>
+              <span className="text-[11px] font-mono text-white bg-white/10 px-2.5 py-1 rounded-lg">{temperature}</span>
             </div>
             <input 
               type="range" min="0" max="1" step="0.1" 
               value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))}
-              className="w-full accent-brand h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+              className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-[9px] text-white/20 uppercase font-bold tracking-widest">
               <span>Predictable</span>
@@ -79,12 +79,12 @@ export function StudioModule({ user }: { user: any }) {
           <div className="space-y-4">
             <div className="flex justify-between items-center px-1">
               <label className="text-xs font-semibold text-white/40">Max Tokens</label>
-              <span className="text-[11px] font-mono text-brand bg-brand/10 px-2.5 py-1 rounded-lg">{maxTokens}</span>
+              <span className="text-[11px] font-mono text-white bg-white/10 px-2.5 py-1 rounded-lg">{maxTokens}</span>
             </div>
             <input 
               type="range" min="128" max="8192" step="128" 
               value={maxTokens} onChange={(e) => setMaxTokens(parseInt(e.target.value))}
-              className="w-full accent-brand h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+              className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
             />
           </div>
 

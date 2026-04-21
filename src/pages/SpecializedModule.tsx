@@ -89,8 +89,8 @@ export function SpecializedModule({ type }: { type: string }) {
     <div className="h-full flex flex-col bg-black p-8 overflow-hidden">
       <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col min-h-0">
         <div className="mb-10 flex items-center gap-6">
-          <div className="w-16 h-16 bg-brand/10 border border-brand/20 rounded-[2rem] flex items-center justify-center neon-glow">
-            <p.icon className="w-9 h-9 text-brand" />
+          <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-[2rem] flex items-center justify-center neon-glow">
+            <p.icon className="w-9 h-9 text-white" />
           </div>
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-white mb-1">{p.name}</h1>
@@ -108,7 +108,7 @@ export function SpecializedModule({ type }: { type: string }) {
                       className="bg-white/[0.03] border border-white/[0.05] p-8 rounded-[2.5rem] text-[15px] text-white/40 text-left hover:bg-white/[0.06] transition-all hover:border-white/[0.1] flex items-center justify-between group shadow-sm"
                     >
                       {ex}
-                      <Sparkles className="w-5 h-5 text-brand opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Sparkles className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                 ))}
              </div>
@@ -123,13 +123,13 @@ export function SpecializedModule({ type }: { type: string }) {
             >
               <div className={cn(
                 "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.05]",
-                m.role === 'user' ? "bg-white/[0.05]" : "bg-brand/10 border-brand/20"
+                m.role === 'user' ? "bg-white/[0.05]" : "bg-white/10 border border-white/20"
               )}>
-                {m.role === 'user' ? <UserIcon className="w-5 h-5 text-white/40" /> : <Bot className="w-5 h-5 text-brand" />}
+                {m.role === 'user' ? <UserIcon className="w-5 h-5 text-white/40" /> : <Bot className="w-5 h-5 text-white" />}
               </div>
               <div className={cn(
                 "flex-1 rounded-[2rem] px-8 py-5 text-[15px] leading-relaxed markdown-body shadow-sm max-w-[85%]",
-                m.role === 'user' ? "bg-brand text-white font-medium float-right rounded-tr-md" : "bg-white/[0.08] text-white/90 float-left rounded-tl-md"
+                m.role === 'user' ? "bg-white text-black font-medium float-right rounded-tr-md" : "bg-white/[0.08] text-white/90 float-left rounded-tl-md"
               )}>
                 <Markdown>{m.content}</Markdown>
               </div>
@@ -154,12 +154,12 @@ export function SpecializedModule({ type }: { type: string }) {
           <Button 
             variant="neon" 
             size="icon" 
-            className="h-11 w-11 rounded-full shadow-lg shadow-brand/20"
+            className="h-11 w-11 rounded-full shadow-lg shadow-white/20"
             onClick={handleSend}
             disabled={!input.trim() || isBusy}
           >
-            <div className="bg-white rounded-full p-1.5">
-              <Send className="w-4 h-4 text-brand fill-brand" />
+            <div className="bg-white rounded-full p-1.5 shadow-sm">
+              <Send className="w-4 h-4 text-black fill-black" />
             </div>
           </Button>
         </div>

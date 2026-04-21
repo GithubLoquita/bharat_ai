@@ -255,63 +255,62 @@ export function ChatModule({ user }: { user: any }) {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8" ref={scrollRef}>
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto space-y-6">
-              <div className="w-20 h-20 bg-brand/10 border border-brand/20 rounded-[2.5rem] flex items-center justify-center rotate-3 scale-110 mb-4 neon-glow">
-                <Sparkles className="w-10 h-10 text-brand" />
-              </div>
-              <h2 className="text-3xl font-bold tracking-tight">Namaste! I am Bhart.</h2>
-              <p className="text-white/40 text-sm leading-relaxed">
-                I can help you with coding, creative writing, multilingual translation, or just a friendly conversation. 
-                I speak Hindi, Bengali, Tamil, and many more Indian languages.
-              </p>
-              
-              <div className="grid grid-cols-2 gap-3 w-full mt-8">
-                {[
-                  "Write a poem in Hindi about a sunrise.",
-                  "Explain photosynthesis in simple Bengali.",
-                  "How to make a great Masala Chai?",
-                  "Write a React component for a job dashboard.",
-                ].map(txt => (
-                  <button 
-                    key={txt} 
-                    onClick={() => { setInputValue(txt); }}
-                    className="glass p-4 rounded-2xl text-xs text-white/50 text-left hover:bg-white/5 transition-all hover:border-white/10"
-                  >
-                    {txt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            messages.map((m) => (
-              <motion.div
-                key={m.id}
-                initial={{ opacity: 0, y: 10 }}
+        <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-12 custom-scrollbar" ref={scrollRef}>
+          <AnimatePresence initial={false}>
+            {messages.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={cn(
-                  "flex gap-4 md:gap-6",
-                  m.role === 'user' ? "flex-reverse" : "flex-row"
-                )}
+                className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto space-y-8"
               >
-                <div className={cn(
-                  "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border border-white/10",
-                  m.role === 'user' ? "bg-white/5 text-white/70" : "bg-brand/10 text-brand border-brand/20 neon-glow"
-                )}>
-                  {m.role === 'user' ? <UserIcon className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
-                </div>
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className={cn(
-                    "rounded-[2rem] px-6 py-4 text-[15px] leading-relaxed inline-block max-w-[85%]",
-                    m.role === 'user' ? "bg-brand text-white font-medium float-right rounded-tr-md" : "bg-white/[0.08] text-white/90 float-left rounded-tl-md markdown-body shadow-sm"
-                  )}>
-                    <Markdown>{m.content}</Markdown>
-                  </div>
+                <motion.div 
+                  animate={{ 
+                    scale: [1, 1.05, 1],
+                    opacity: [0.8, 1, 0.8]
+                  }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="w-24 h-24 bg-white/[0.03] border border-white/10 rounded-[3rem] flex items-center justify-center mb-4 neon-glow"
+                >
+                  <Sparkles className="w-12 h-12 text-white" />
+                </motion.div>
+                <div className="space-y-4">
+                  <h2 className="text-4xl font-black tracking-tighter">Bhart AI</h2>
+                  <p className="text-white/40 text-[15px] leading-relaxed max-w-md mx-auto">
+                    India's most advanced multimodal assistant. Speak or type in any Indian language.
+                  </p>
                 </div>
               </motion.div>
-            ))
-          )}
+            ) : (
+              messages.map((m, i) => (
+                <motion.div
+                  key={m.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className={cn(
+                    "flex gap-6 max-w-4xl mx-auto",
+                    m.role === 'user' ? "flex-reverse" : "flex-row"
+                  )}
+                >
+                  <div className={cn(
+                    "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border border-white/10",
+                    m.role === 'user' ? "bg-white/5 text-white/70" : "bg-white text-black border-white/20 neon-glow"
+                  )}>
+                    {m.role === 'user' ? <UserIcon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className={cn(
+                      "rounded-[2.5rem] px-8 py-6 text-[16px] leading-relaxed inline-block max-w-[85%] shadow-sm",
+                      m.role === 'user' 
+                        ? "bg-white text-black font-semibold float-right rounded-tr-md" 
+                        : "bg-white/[0.05] text-white/90 float-left rounded-tl-md markdown-body border border-white/[0.05]"
+                    )}>
+                      <Markdown>{m.content}</Markdown>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
           {isStreaming && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 md:gap-6">
               <div className="w-10 h-10 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center neon-glow">
@@ -366,12 +365,12 @@ export function ChatModule({ user }: { user: any }) {
               <Button 
                 variant="neon" 
                 size="icon" 
-                className="h-10 w-10 rounded-full mb-2.5 shadow-xl shadow-brand/20" 
+                className="h-10 w-10 rounded-full mb-2.5 shadow-xl shadow-white/20" 
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isStreaming}
               >
-                <div className="bg-white rounded-full p-1.5">
-                  <Send className="w-4 h-4 text-brand fill-brand" />
+                <div className="bg-white rounded-full p-1.5 shadow-sm">
+                  <Send className="w-4 h-4 text-black fill-black" />
                 </div>
               </Button>
             </div>

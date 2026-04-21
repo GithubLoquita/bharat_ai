@@ -66,74 +66,85 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full bg-black flex items-center justify-center">
+      <div className="h-screen w-full bg-black flex flex-col items-center justify-center gap-6">
         <motion.div 
-          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="w-12 h-12 bg-brand rounded-2xl neon-glow"
+          animate={{ 
+            rotate: 360,
+            borderRadius: ["20%", "50%", "20%"]
+          }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-2 border-white/20 border-t-white"
         />
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="text-white/40 text-xs tracking-[0.3em] font-black uppercase"
+        >
+          Initializing Bhart AI
+        </motion.p>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-black overflow-hidden relative">
+      <div className="min-h-screen bg-black overflow-hidden relative selection:bg-white selection:text-black">
         <Toaster position="top-center" theme="dark" />
         
-        {/* Background Accents */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 blur-[120px] rounded-full" />
+        {/* Fine-tuned Background Accents */}
+        <div className="absolute top-0 left-1/4 w-1/2 h-full bg-gradient-to-b from-white/[0.03] to-transparent blur-[120px]" />
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-white/[0.04] blur-[150px] rounded-full" />
 
-        <nav className="p-6 flex justify-between items-center relative z-10 container mx-auto">
+        <nav className="p-8 flex justify-between items-center relative z-10 container mx-auto">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center">
-              <Zap className="text-white w-5 h-5 fill-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Bhart AI</span>
+            <span className="text-2xl font-black tracking-tighter text-white">Bhart AI</span>
           </div>
-          <Button variant="outline" onClick={handleLogin}>Log In</Button>
+          <div className="flex items-center gap-8">
+            <button onClick={handleLogin} className="text-xs font-bold text-white/40 hover:text-white transition-colors tracking-widest uppercase">Pricing</button>
+            <button onClick={handleLogin} className="text-xs font-bold text-white/40 hover:text-white transition-colors tracking-widest uppercase">Developers</button>
+            <Button variant="outline" onClick={handleLogin} className="rounded-full px-8 border-white/10 hover:bg-white hover:text-black transition-all">Sign In</Button>
+          </div>
         </nav>
 
-        <main className="container mx-auto px-6 py-20 relative z-10 flex flex-col items-center text-center">
+        <main className="container mx-auto px-6 py-32 relative z-10 flex flex-col items-center text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 glass-pill text-xs font-semibold text-brand mb-8"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-3 px-6 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-full text-[10px] font-black tracking-[0.2em] text-white/60 mb-12 uppercase"
           >
-            <Sparkles className="w-3 h-3" />
-            INDIA'S PREMIER AI PLATFORM
+            <Sparkles className="w-3 h-3 text-white" />
+            Google AI Studio Powering Bharat
           </motion.div>
 
           <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 max-w-4xl leading-[1]"
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="text-7xl md:text-[10rem] font-black tracking-[-0.05em] mb-12 max-w-6xl leading-[0.85] text-white"
           >
-            Empower Bharat with <span className="text-brand">Next-Gen</span> Artificial Intelligence.
+            AI FOR THE <br /> <span className="opacity-40">NEXT BILLION.</span>
           </motion.h1>
 
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-white/60 text-lg md:text-xl max-w-2xl mb-12 leading-relaxed"
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-white/40 text-lg md:text-2xl max-w-2xl mb-16 leading-relaxed font-medium"
           >
-            The all-in-one AI ecosystem for Bharat. From multilingual chat to image generation, 
-            psychology support to educational assistance. Built for efficiency, accessibility, and local context.
+            Supercharge your workflow with India's most advanced <br className="hidden md:block" /> multimodal intelligence platform. 
           </motion.p>
 
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="flex flex-col md:flex-row gap-4"
+            transition={{ delay: 0.4 }}
+            className="flex flex-col md:flex-row gap-6"
           >
-            <Button size="lg" variant="neon" onClick={handleLogin} className="gap-2">
-              Start Building <ChevronRight className="w-4 h-4" />
+            <Button size="lg" variant="neon" onClick={handleLogin} className="gap-3 h-16 px-12 rounded-full font-black tracking-widest shadow-2xl shadow-white/10 group">
+              Get Started <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button size="lg" variant="secondary">View Documentation</Button>
+            <Button size="lg" variant="secondary" className="h-16 px-12 rounded-full font-black tracking-widest bg-white/5 border-white/10">Read Docs</Button>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-32 w-full max-w-5xl">
@@ -174,9 +185,9 @@ export default function App() {
       case 'business':
         return <SpecializedModule type={activeTab} />;
       default: return (
-        <div className="flex flex-col items-center justify-center h-full text-white/40 space-y-4">
-          <Zap className="w-12 h-12" />
-          <p className="text-sm font-medium uppercase tracking-widest text-white/20">Coming Soon: {activeTab}</p>
+        <div className="flex flex-col items-center justify-center h-full text-white/40 space-y-6">
+          <Sparkles className="w-16 h-16 animate-pulse" />
+          <p className="text-xs font-black uppercase tracking-[0.4em] text-white/10">In Development: {activeTab}</p>
         </div>
       );
     }
@@ -188,8 +199,19 @@ export default function App() {
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <main className="flex-1 flex flex-col min-w-0 bg-black relative">
-        <header className="h-20 px-10 flex items-center justify-between bg-black/40 backdrop-blur-3xl sticky top-0 z-20">
-          <h2 className="text-xl font-bold text-white tracking-tight capitalize">{activeTab}</h2>
+        <header className="h-24 px-10 flex items-center justify-between border-b border-white/[0.05] sticky top-0 z-20 bg-black/60 backdrop-blur-2xl">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-black text-white tracking-tighter capitalize transition-all">{activeTab}</h2>
+            {activeTab === 'chat' && (
+              <motion.span 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="px-3 py-1 bg-white/[0.05] border border-white/[0.1] rounded-full text-[10px] font-black tracking-widest text-white/40"
+              >
+                1.5 FLASH
+              </motion.span>
+            )}
+          </div>
           
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 bg-white/[0.05] border border-white/[0.08] rounded-full px-4 py-2 hover:bg-white/[0.08] transition-colors cursor-pointer group">

@@ -137,7 +137,7 @@ export function ImageModule({ user }: { user: any }) {
             <Button 
               variant="neon" 
               size="lg" 
-              className="h-14 gap-2 rounded-full px-12 shadow-2xl shadow-brand/30"
+              className="h-14 gap-2 rounded-full px-12 shadow-2xl shadow-white/30"
               onClick={generateImage}
               disabled={!prompt.trim() || isGenerating}
             >
@@ -150,7 +150,7 @@ export function ImageModule({ user }: { user: any }) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <LayoutGrid className="w-4 h-4 text-brand" /> Your Gallery
+              <LayoutGrid className="w-4 h-4 text-white" /> Your Gallery
             </h2>
             <div className="text-[10px] uppercase tracking-widest font-bold text-white/30">
               {images.length} ARCHIVES
