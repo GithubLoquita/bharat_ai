@@ -65,19 +65,12 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       
       <div className="p-6">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white/[0.05] border border-white/[0.08] p-6 rounded-[2rem] relative overflow-hidden group shadow-2xl"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/[0.03] border border-white/5 p-6 rounded-[2rem] text-center"
         >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 blur-3xl rounded-full" />
-          <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-black mb-2 flex items-center gap-2">
-            PRO ACCESS
-          </p>
-          <p className="text-xs text-white/60 mb-4 leading-relaxed">Unlock deep reasoning and multimodal analysis.</p>
-          <button className="w-full py-3 bg-white text-black rounded-full text-xs font-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/10 uppercase tracking-widest">
-            Upgrade Now
-          </button>
+          <Sparkles className="w-5 h-5 text-white/20 mx-auto mb-3" />
+          <p className="text-[10px] text-white/20 font-black tracking-[0.3em] uppercase">Public Alpha</p>
         </motion.div>
       </div>
     </aside>
