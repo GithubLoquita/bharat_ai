@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Plus, Paperclip, Mic, StopCircle, Trash2, Languages, Globe2, Sparkles, User as UserIcon, Bot, ChevronDown } from 'lucide-react';
+import { Send, Plus, Paperclip, Mic, StopCircle, Trash2, Languages, Globe2, Sparkles, User as UserIcon, Bot, ChevronDown, History, X, MessageSquare } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth } from '../lib/firebase';
@@ -29,6 +29,7 @@ export function ChatModule({ user }: { user: any }) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch chats
@@ -218,44 +219,79 @@ export function ChatModule({ user }: { user: any }) {
 
   return (
     <div className="flex h-full min-w-0 bg-black relative">
-      {/* History Sidebar */}
-      <div className={cn(
-        "w-72 bg-[#1C1C1E]/30 flex flex-col transition-all overflow-hidden shrink-0",
-      )}>
-        <div className="p-6">
-          <Button variant="secondary" className="w-full justify-start gap-2 h-12 rounded-2xl bg-white/5 border-none hover:bg-white/10" onClick={startNewChat}>
-            <Plus className="w-4 h-4" /> New Chat
-          </Button>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto px-4 space-y-1">
-          {chats.map(chat => (
-            <div
-              key={chat.id}
-              onClick={() => setActiveChatId(chat.id)}
-              className={cn(
-                "w-full text-left px-4 py-3.5 rounded-2xl text-sm transition-all group relative cursor-pointer",
-                activeChatId === chat.id ? "bg-white/[0.08] text-white" : "text-white/30 hover:bg-white/[0.03] hover:text-white/50"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-4 h-4 shrink-0" />
-                <span className="truncate pr-4">{chat.title}</span>
-              </div>
+      {/* History Sidebar - Mobile Overlay & Tablet/Desktop Drawer */}
+      <AnimatePresence>
+        {(historyOpen || (typeof window !== 'undefined' && window.innerWidth >= 1024)) && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 288, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            className={cn(
+              "fixed inset-y-0 left-0 z-40 lg:relative lg:z-0 bg-[#1C1C1E] lg:bg-[#1C1C1E]/30 flex flex-col transition-all overflow-hidden shrink-0 border-r border-white/5",
+              !historyOpen && "hidden lg:flex"
+            )}
+          >
+            <div className="p-6 flex items-center justify-between">
+              <Button variant="secondary" className="flex-1 justify-start gap-2 h-12 rounded-2xl bg-white/5 border-none hover:bg-white/10" onClick={() => { startNewChat(); setHistoryOpen(false); }}>
+                <Plus className="w-4 h-4" /> New Chat
+              </Button>
               <button 
-                onClick={(e) => deleteChat(chat.id, e)}
-                className="absolute right-3 opacity-0 group-hover:opacity-100 hover:text-red-400 transition-all p-1 hover:bg-white/5 rounded-md"
+                onClick={() => setHistoryOpen(false)}
+                className="lg:hidden ml-2 p-2 text-white/40 hover:text-white"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-          ))}
-        </div>
-      </div>
+            
+            <div className="flex-1 overflow-y-auto px-4 space-y-1 custom-scrollbar">
+              {chats.map(chat => (
+                <div
+                  key={chat.id}
+                  onClick={() => { setActiveChatId(chat.id); setHistoryOpen(false); }}
+                  className={cn(
+                    "w-full text-left px-4 py-3.5 rounded-2xl text-sm transition-all group relative cursor-pointer",
+                    activeChatId === chat.id ? "bg-white/[0.08] text-white" : "text-white/30 hover:bg-white/[0.03] hover:text-white/50"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="w-4 h-4 shrink-0" />
+                    <span className="truncate pr-4">{chat.title}</span>
+                  </div>
+                  <button 
+                    onClick={(e) => deleteChat(chat.id, e)}
+                    className="absolute right-3 opacity-0 group-hover:opacity-100 hover:text-red-400 transition-all p-1 hover:bg-white/5 rounded-md"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile History Backdrop */}
+      {historyOpen && (
+        <div 
+          onClick={() => setHistoryOpen(false)}
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+        />
+      )}
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-12 custom-scrollbar" ref={scrollRef}>
+        {/* Local Chat Header for Mobile */}
+        <div className="lg:hidden h-12 px-6 flex items-center border-b border-white/5 mb-4">
+          <button 
+            onClick={() => setHistoryOpen(true)}
+            className="flex items-center gap-2 text-white/40 hover:text-white transition-colors"
+          >
+            <History className="w-4 h-4" />
+            <span className="text-[10px] font-black uppercase tracking-widest">History</span>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 md:p-12 space-y-8 md:space-y-12 custom-scrollbar" ref={scrollRef}>
           <AnimatePresence initial={false}>
             {messages.length === 0 ? (
               <motion.div 
@@ -344,7 +380,7 @@ export function ChatModule({ user }: { user: any }) {
                   placeholder="Message Bhart..."
                   className="w-full bg-transparent border-none focus:ring-0 text-[15px] px-5 pt-4 min-h-[56px] max-h-64 resize-none placeholder:text-white/20"
                 />
-                <div className="flex items-center gap-1.5 px-4 pb-3">
+                <div className="flex items-center gap-1 px-4 pb-3">
                   <Button variant="ghost" size="icon" className="h-9 w-9 text-white/30 hover:text-white hover:bg-white/5 rounded-full">
                     <Plus className="w-5 h-5" />
                   </Button>
@@ -365,7 +401,7 @@ export function ChatModule({ user }: { user: any }) {
               <Button 
                 variant="neon" 
                 size="icon" 
-                className="h-10 w-10 rounded-full mb-2.5 shadow-xl shadow-white/20" 
+                className="h-10 w-10 md:h-12 md:w-12 rounded-full mb-1 lg:mb-2.5 shadow-xl shadow-white/20 shrink-0" 
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isStreaming}
               >
@@ -383,5 +419,3 @@ export function ChatModule({ user }: { user: any }) {
     </div>
   );
 }
-
-const MessageSquare = ({ className }: { className?: string }) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;

@@ -13,11 +13,11 @@ export function HomeModule({ onExplore }: HomeModuleProps) {
       <div className="absolute top-0 left-1/4 w-1/2 h-full bg-gradient-to-b from-white/[0.03] to-transparent blur-[120px] pointer-events-none" />
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-white/[0.04] blur-[150px] rounded-full pointer-events-none" />
 
-      <main className="container mx-auto px-6 py-24 relative z-10 flex flex-col items-center text-center">
+      <main className="container mx-auto px-6 md:px-12 py-12 md:py-24 relative z-10 flex flex-col items-center text-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="inline-flex items-center gap-3 px-6 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-full text-[10px] font-black tracking-[0.2em] text-white/60 mb-12 uppercase"
+          className="inline-flex items-center gap-3 px-6 py-2.5 bg-white/[0.05] border border-white/[0.1] rounded-full text-[9px] md:text-[10px] font-black tracking-[0.2em] text-white/60 mb-8 md:mb-12 uppercase"
         >
           <Sparkles className="w-3 h-3 text-white" />
           Google AI Studio Powering Bharat
@@ -27,16 +27,16 @@ export function HomeModule({ onExplore }: HomeModuleProps) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="text-7xl md:text-[8rem] lg:text-[10rem] font-black tracking-[-0.05em] mb-12 max-w-6xl leading-[0.85] text-white"
+          className="text-5xl md:text-[8rem] lg:text-[10rem] font-black tracking-[-0.05em] mb-8 md:mb-12 max-w-6xl leading-[0.9] lg:leading-[0.85] text-white"
         >
-          AI FOR THE <br /> <span className="opacity-40">NEXT BILLION.</span>
+          AI FOR THE <br /> <span className="opacity-40 text-4xl md:text-inherit">NEXT BILLION.</span>
         </motion.h1>
 
         <motion.p 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
-          className="text-white/40 text-lg md:text-2xl max-w-2xl mb-16 leading-relaxed font-medium"
+          className="text-white/40 text-sm md:text-2xl max-w-2xl mb-12 md:mb-16 leading-relaxed font-medium px-4"
         >
           Supercharge your workflow with India's most advanced <br className="hidden md:block" /> multimodal intelligence platform. 
         </motion.p>
@@ -93,20 +93,20 @@ export function HomeModule({ onExplore }: HomeModuleProps) {
               />
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-6 text-center md:text-left">
               <div className="space-y-2">
                 <p className="text-[10px] uppercase tracking-[0.4em] text-white/30 font-black">About the Founder</p>
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white">Sandip Hembram</h2>
+                <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">Sandip Hembram</h2>
                 <p className="text-white/60 font-medium text-lg">Co-founder and CEO of Bhart AI</p>
               </div>
               
-              <p className="text-white/40 leading-relaxed text-sm md:text-base max-w-xl">
+              <p className="text-white/40 leading-relaxed text-sm md:text-base max-w-xl mx-auto md:mx-0">
                 A visionary software architect and tech leader dedicated to democratizing AI for Bharat. 
                 Under Sandip's leadership, Bhart AI is building inclusive, multimodal intelligence 
                 that bridges the digital divide across India's diverse linguistic landscape.
               </p>
               
-              <div className="flex gap-4">
+              <div className="flex flex-wrap justify-center md:justify-start gap-4">
                 <div className="px-5 py-2.5 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-full">Visionary</div>
                 <div className="px-5 py-2.5 bg-white/5 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-widest rounded-full">Tech Innovator</div>
               </div>

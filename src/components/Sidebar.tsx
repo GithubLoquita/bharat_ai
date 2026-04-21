@@ -1,4 +1,4 @@
-import { type LucideIcon, MessageSquare, LayoutGrid, Image as ImageIcon, BrainCircuit, GraduationCap, Briefcase, Zap, Settings, History, Sparkles, Home } from 'lucide-react';
+import { type LucideIcon, MessageSquare, LayoutGrid, Image as ImageIcon, BrainCircuit, GraduationCap, Briefcase, Zap, Settings, History, Sparkles, Home, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 
@@ -24,13 +24,25 @@ const navItems: NavItem[] = [
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onClose?: () => void;
 }
 
-export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, onClose }: SidebarProps) {
   return (
-    <aside className="w-72 flex flex-col bg-black h-screen sticky top-0 overflow-hidden border-r border-white/[0.05]">
-      <div className="p-10">
+    <aside className={cn(
+      "w-72 flex flex-col bg-black h-full overflow-hidden border-r border-white/[0.05] relative",
+      "lg:sticky lg:top-0 h-screen"
+    )}>
+      <div className="p-10 flex items-center justify-between">
         <h1 className="text-2xl font-black tracking-tighter text-white">Bhart AI</h1>
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="lg:hidden p-2 text-white/40 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
       
       <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pt-2">
@@ -40,7 +52,10 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => {
+              setActiveTab(item.id);
+              onClose?.();
+            }}
             className={cn(
               "w-full flex items-center gap-4 px-6 py-4 rounded-full text-[15px] transition-all group relative overflow-hidden",
               activeTab === item.id 
