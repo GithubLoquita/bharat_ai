@@ -1,4 +1,4 @@
-import { type LucideIcon, MessageSquare, LayoutGrid, Image as ImageIcon, BrainCircuit, GraduationCap, Briefcase, Zap, Settings, History, Sparkles } from 'lucide-react';
+import { type LucideIcon, MessageSquare, LayoutGrid, Image as ImageIcon, BrainCircuit, GraduationCap, Briefcase, Zap, Settings, History, Sparkles, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 
@@ -10,6 +10,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { id: 'home', label: 'Home', icon: Home },
   { id: 'chat', label: 'AI Chat', icon: MessageSquare },
   { id: 'studio', label: 'AI Studio', icon: Sparkles },
   { id: 'images', label: 'Vision Forge', icon: ImageIcon },
@@ -63,7 +64,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         ))}
       </nav>
       
-      <div className="p-6">
+      <div className="p-6 space-y-6">
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -72,6 +73,11 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           <Sparkles className="w-5 h-5 text-white/20 mx-auto mb-3" />
           <p className="text-[10px] text-white/20 font-black tracking-[0.3em] uppercase">Public Alpha</p>
         </motion.div>
+
+        <div className="px-4 text-center">
+          <p className="text-[10px] text-white/10 font-bold tracking-tight">Built by Sandip Hembram</p>
+          <p className="text-[8px] text-white/[0.05] uppercase tracking-widest mt-0.5">CEO & Co-founder</p>
+        </div>
       </div>
     </aside>
   );
