@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user account information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["free", "pro", "business"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Chat": {
+      "title": "Chat Session",
+      "description": "Represents a conversational session with an AI model.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "model": { "type": "string" },
+        "mode": { "type": "string", "enum": ["chat", "coding", "reasoning", "search"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title"]
+    },
+    "Message": {
+      "title": "Chat Message",
+      "description": "A single exchange in a chat session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "chatId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "model", "system"] },
+        "content": { "type": "string" },
+        "multimodalData": { "type": "array", "items": { "type": "object" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "chatId", "role", "content"]
+    },
+    "GeneratedImage": {
+      "title": "Generated Image",
+      "description": "Metadata for images created via AI.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "prompt": { "type": "string" },
+        "url": { "type": "string" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "prompt", "url"]
+    },
+    "PromptTemplate": {
+      "title": "AI Studio Prompt",
+      "description": "Saved prompt templates for the developer playground.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "systemPrompt": { "type": "string" },
+        "userPrompt": { "type": "string" },
+        "config": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Protected user profiles."
+    },
+    "chats/{chatId}": {
+      "schema": "Chat",
+      "description": "User chat sessions."
+    },
+    "chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a chat."
+    },
+    "images/{imageId}": {
+      "schema": "GeneratedImage",
+      "description": "Metadata for user-generated images."
+    },
+    "studio/{promptId}": {
+      "schema": "PromptTemplate",
+      "description": "User prompt templates."
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Bhart AI",
+  "description": "The premiere Indian AI platform. A full-stack SaaS featuring advanced multimodal chat, image generation, developer playground, and specialized AI tools for education, business, and wellness.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "Multimodal AI",
+    "Multilingual Support",
+    "SaaS Platform"
+  ]
+}
