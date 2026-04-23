@@ -119,17 +119,19 @@ export function SpecializedModule({ type }: { type: string }) {
               key={i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className={cn("flex gap-5", m.role === 'user' ? "flex-reverse" : "")}
+              className={cn("flex gap-5", m.role === 'user' ? "flex-row-reverse" : "flex-row")}
             >
               <div className={cn(
-                "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.05]",
-                m.role === 'user' ? "bg-white/[0.05]" : "bg-white/10 border border-white/20"
+                "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border border-white/[0.05] shadow-lg",
+                m.role === 'user' ? "bg-white/10 text-white" : "bg-white text-black border-white/20 neon-glow"
               )}>
-                {m.role === 'user' ? <UserIcon className="w-5 h-5 text-white/40" /> : <Bot className="w-5 h-5 text-white" />}
+                {m.role === 'user' ? <UserIcon className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
               </div>
               <div className={cn(
                 "flex-1 rounded-[2rem] px-8 py-5 text-[15px] leading-relaxed markdown-body shadow-sm max-w-[85%]",
-                m.role === 'user' ? "bg-white text-black font-medium float-right rounded-tr-md" : "bg-white/[0.08] text-white/90 float-left rounded-tl-md"
+                m.role === 'user' 
+                  ? "bg-white text-[#000000] font-bold float-right rounded-tr-md" 
+                  : "bg-white/[0.08] text-white/90 float-left rounded-tl-md markdown-body-dark"
               )}>
                 <Markdown>{m.content}</Markdown>
               </div>
@@ -149,7 +151,7 @@ export function SpecializedModule({ type }: { type: string }) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder={`Message ${p.name.split(' ')[0]}...`}
-            className="flex-1 bg-transparent border-none focus:ring-0 text-[15px] px-8 py-3.5 placeholder:text-white/20"
+            className="flex-1 bg-transparent border-none focus:ring-0 text-[15px] px-8 py-3.5 placeholder:text-white/40 text-white"
           />
           <Button 
             variant="neon" 

@@ -35,45 +35,8 @@ async function startServer() {
       status: "ok", 
       mode: process.env.NODE_ENV,
       port: PORT,
-      timestamp: new Date().toISOString(),
-      hasApiKey: !!process.env.GEMINI_API_KEY
+      timestamp: new Date().toISOString()
     });
-  });
-
-  // Chat API Route (Server-Side to prevent key reveal and handle retries)
-  app.post("/api/chat", async (req, res) => {
-    const { message, history } = req.body;
-    
-    console.log(`[Chat] Request received. Message length: ${message?.length}`);
-    
-    if (!process.env.GEMINI_API_KEY) {
-      console.error("[Chat] Error: GEMINI_API_KEY is missing from environment.");
-      return res.status(500).json({ error: "Server configuration error: Missing API Key." });
-    }
-
-    if (!message) {
-      return res.status(400).json({ error: "Message is required." });
-    }
-
-    try {
-      console.log("[Chat] Calling Gemini API via @google/genai...");
-      const chat = ai.chats.create({
-        model: "gemini-1.5-flash",
-        history: history || []
-      });
-
-      const result = await chat.sendMessage({ message });
-      const text = (result as any).text || (result as any).response?.text?.() || "";
-      
-      console.log(`[Chat] Success. Response length: ${text.length}`);
-      res.json({ text });
-    } catch (error: any) {
-      console.error("[Chat] API Error:", error);
-      res.status(500).json({ 
-        error: "Failed to generate response. The process might have been interrupted by the AI provider.",
-        details: isProduction ? undefined : error.message
-      });
-    }
   });
 
   // Vite middleware for development

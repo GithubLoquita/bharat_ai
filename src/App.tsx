@@ -221,7 +221,7 @@ export default function App() {
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-full bg-white/[0.03] border border-white/[0.05] rounded-full py-2.5 lg:py-3.5 pl-10 lg:pl-12 pr-6 text-[12px] lg:text-[13px] text-white focus:outline-none focus:bg-white/[0.05] focus:border-white/10 transition-all font-medium placeholder:text-white/10"
+                className="w-full bg-white/[0.03] border border-white/[0.05] rounded-full py-2.5 lg:py-3.5 pl-10 lg:pl-12 pr-6 text-[12px] lg:text-[13px] text-white focus:outline-none focus:bg-white/[0.05] focus:border-white/10 transition-all font-medium placeholder:text-white/30"
               />
               {searchQuery && (
                 <button 

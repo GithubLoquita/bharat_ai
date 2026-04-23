@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Plus, Paperclip, Mic, StopCircle, Trash2, Languages, Globe2, Sparkles, User as UserIcon, Bot, ChevronDown, History, X, MessageSquare } from 'lucide-react';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { auth } from '../lib/firebase';
+import { ai } from '../lib/gemini';
 import Markdown from 'react-markdown';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
@@ -133,13 +133,15 @@ export function ChatModule({ user }: { user: any }) {
     }
   };
 
-  const handleSend = async (e?: React.FormEvent) => {
+  const handleSend = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e) e.preventDefault();
     
     if (isRecording) {
       recognitionRef.current?.stop();
     }
     if (!inputValue.trim() || isStreaming) return;
+    
+    console.log("[Chat] handleSend triggered"); // Production-safe debug logging
     
     let chatId = activeChatId;
     if (!chatId) {
@@ -173,54 +175,18 @@ export function ChatModule({ user }: { user: any }) {
 
     setIsStreaming(true);
     
-    const fetchWithRetry = async (message: string, chatHistory: any[], attempt: number = 1): Promise<string> => {
-      const API_URL = (import.meta as any).env.VITE_API_URL || '';
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
-
-      try {
-        console.log(`[Chat] Sending request to ${API_URL}/api/chat (Attempt ${attempt})`);
-        const response = await fetch(`${API_URL}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, history: chatHistory }),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Server responded with ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.text;
-      } catch (error: any) {
-        clearTimeout(timeoutId);
-        
-        if (error.name === 'AbortError') {
-          throw new Error("Request timed out. The AI is taking too long to respond.");
-        }
-
-        // Retry logic for cold starts (502/503/504 errors commonly from Railway/Vercel)
-        if (attempt < 3 && (error.message.includes('500') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
-          console.warn(`[Chat] Retrying due to error: ${error.message}`);
-          await new Promise(resolve => setTimeout(resolve, 2000 * attempt)); // Exponential backoff
-          return fetchWithRetry(message, chatHistory, attempt + 1);
-        }
-        
-        throw error;
-      }
-    };
-
     try {
-      const history = messages.map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }]
-      }));
+      const chat = ai.chats.create({
+        model: "gemini-3-flash-preview",
+        history: messages.map(m => ({
+          role: m.role,
+          parts: [{ text: m.content }]
+        }))
+      });
 
-      const fullText = await fetchWithRetry(userMsg, history);
+      console.log("[Chat] Sending message to Gemini...");
+      const result = await chat.sendMessage({ message: userMsg });
+      const fullText = result.text || "";
 
       await addDoc(collection(db, 'chats', chatId, 'messages'), {
         role: 'model',
@@ -234,7 +200,7 @@ export function ChatModule({ user }: { user: any }) {
 
     } catch (error: any) {
       console.error("[Chat] Error:", error);
-      toast.error(error.message || "AI response failed. Please check your connection.");
+      toast.error("AI response failed. Please check your connection.");
     } finally {
       setIsStreaming(false);
     }
@@ -355,12 +321,12 @@ export function ChatModule({ user }: { user: any }) {
                   animate={{ opacity: 1, scale: 1 }}
                   className={cn(
                     "flex gap-6 max-w-4xl mx-auto",
-                    m.role === 'user' ? "flex-reverse" : "flex-row"
+                    m.role === 'user' ? "flex-row-reverse" : "flex-row"
                   )}
                 >
                   <div className={cn(
                     "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border border-white/10",
-                    m.role === 'user' ? "bg-white/5 text-white/70" : "bg-white text-black border-white/20 neon-glow"
+                    m.role === 'user' ? "bg-white/10 text-white" : "bg-white text-black border-white/20 neon-glow"
                   )}>
                     {m.role === 'user' ? <UserIcon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                   </div>
@@ -368,8 +334,8 @@ export function ChatModule({ user }: { user: any }) {
                     <div className={cn(
                       "rounded-[2.5rem] px-8 py-6 text-[16px] leading-relaxed inline-block max-w-[85%] shadow-sm",
                       m.role === 'user' 
-                        ? "bg-white text-black font-semibold float-right rounded-tr-md" 
-                        : "bg-white/[0.05] text-white/90 float-left rounded-tl-md markdown-body border border-white/[0.05]"
+                        ? "bg-white text-[#000000] font-bold float-right rounded-tr-md" 
+                        : "bg-white/[0.05] text-white/90 float-left rounded-tl-md markdown-body markdown-body-dark border border-white/[0.05]"
                     )}>
                       <Markdown>{m.content}</Markdown>
                     </div>
@@ -412,7 +378,7 @@ export function ChatModule({ user }: { user: any }) {
                     }
                   }}
                   placeholder="Message Bhart..."
-                  className="w-full bg-transparent border-none focus:ring-0 text-[15px] px-5 pt-4 min-h-[56px] max-h-64 resize-none placeholder:text-white/20"
+                  className="w-full bg-transparent border-none focus:ring-0 text-[15px] px-5 pt-4 min-h-[56px] max-h-64 resize-none placeholder:text-white/40 text-white"
                 />
                 <div className="flex items-center gap-1 px-4 pb-3">
                   <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-white/30 hover:text-white hover:bg-white/5 rounded-full">
@@ -433,17 +399,24 @@ export function ChatModule({ user }: { user: any }) {
                   <div className="flex-1" />
                 </div>
               </div>
-              <Button 
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 type="submit"
-                variant="neon" 
-                size="icon" 
-                className="h-10 w-10 md:h-12 md:w-12 rounded-full mb-1 lg:mb-2.5 shadow-xl shadow-white/20 shrink-0" 
+                onClick={handleSend}
                 disabled={!inputValue.trim() || isStreaming}
+                className={cn(
+                  "h-10 w-10 md:h-12 md:w-12 rounded-full mb-1 lg:mb-2.5 shadow-xl shadow-white/20 shrink-0 flex items-center justify-center transition-all cursor-pointer z-50",
+                  (!inputValue.trim() || isStreaming) ? "opacity-50 grayscale cursor-not-allowed" : "bg-white text-black hover:shadow-white/40 active:bg-white/80 neon-glow"
+                )}
               >
-                <div className="bg-white rounded-full p-1.5 shadow-sm">
-                  <Send className="w-4 h-4 text-black fill-black" />
+                <div className={cn(
+                  "rounded-full p-2 flex items-center justify-center transition-transform",
+                  isStreaming ? "animate-spin" : "hover:rotate-12"
+                )}>
+                  <Send className="w-4 h-4 md:w-5 md:h-5 text-black fill-black" />
                 </div>
-              </Button>
+              </motion.button>
             </div>
           </form>
           <p className="text-[10px] text-center mt-3 text-white/20 uppercase tracking-widest font-bold">
