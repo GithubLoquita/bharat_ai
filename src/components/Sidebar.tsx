@@ -22,19 +22,37 @@ const navItems: NavItem[] = [
 ];
 
 interface SidebarProps {
+  user: any;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onClose?: () => void;
 }
 
-export function Sidebar({ activeTab, setActiveTab, onClose }: SidebarProps) {
+export function Sidebar({ user, activeTab, setActiveTab, onClose }: SidebarProps) {
   return (
     <aside className={cn(
       "w-72 flex flex-col bg-black h-full overflow-hidden border-r border-white/[0.05] relative",
       "lg:sticky lg:top-0 h-screen"
     )}>
-      <div className="p-10 flex items-center justify-between">
-        <h1 className="text-2xl font-black tracking-tighter text-white">Bhart AI</h1>
+      <div className="p-8 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border border-white/10 shrink-0">
+            <img 
+              src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`} 
+              alt={user?.displayName} 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg font-black tracking-tighter text-white truncate leading-tight">
+              {user?.displayName?.split(' ')[0] || 'Explorer'}
+            </h1>
+            <p className="text-[8px] text-white/20 font-black uppercase tracking-[0.2em]">
+              {user?.isGuest ? 'Guest Entry' : 'Level 1 Sync'}
+            </p>
+          </div>
+        </div>
         {onClose && (
           <button 
             onClick={onClose}

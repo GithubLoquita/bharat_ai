@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ImageIcon, Wand2, Download, Trash2, LayoutGrid, Search, Sparkles, AlertCircle } from 'lucide-react';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { ai } from '../lib/gemini';
 import { Button } from '../components/ui/Button';
@@ -22,7 +22,10 @@ export function ImageModule({ user }: { user: any }) {
   const [aspectRatio, setAspectRatio] = useState('1:1');
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !auth.currentUser) {
+      if (!user) setImages([]);
+      return;
+    }
     const q = query(
       collection(db, 'images'),
       where('userId', '==', user.uid),
@@ -30,6 +33,8 @@ export function ImageModule({ user }: { user: any }) {
     );
     return onSnapshot(q, (snapshot) => {
       setImages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GeneratedImage)));
+    }, (error) => {
+      console.warn("Images sync denied:", error.message);
     });
   }, [user]);
 
@@ -67,12 +72,24 @@ export function ImageModule({ user }: { user: any }) {
         throw new Error(safetyMessage);
       }
 
-      await addDoc(collection(db, 'images'), {
-        userId: user.uid,
-        prompt: prompt,
-        url: imageUrl,
-        createdAt: serverTimestamp(),
-      });
+      // Add to Firestore if authenticated
+      if (auth.currentUser) {
+        await addDoc(collection(db, 'images'), {
+          userId: user.uid,
+          prompt: prompt,
+          url: imageUrl,
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        // Local temporary storage for guests
+        const localImg: GeneratedImage = {
+          id: Date.now().toString(),
+          prompt,
+          url: imageUrl,
+          createdAt: { seconds: Math.floor(Date.now() / 1000) }
+        };
+        setImages(prev => [localImg, ...prev]);
+      }
 
       toast.success("Image generated successfully!", { id: toastId });
       setPrompt('');

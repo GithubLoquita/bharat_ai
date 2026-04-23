@@ -4,9 +4,11 @@ import { Button } from '../components/ui/Button';
 
 interface HomeModuleProps {
   onExplore: () => void;
+  onLogin: () => void;
+  user: any;
 }
 
-export function HomeModule({ onExplore }: HomeModuleProps) {
+export function HomeModule({ onExplore, onLogin, user }: HomeModuleProps) {
   return (
     <div className="h-full overflow-y-auto bg-black selection:bg-white selection:text-black custom-scrollbar">
       {/* Fine-tuned Background Accents */}
@@ -50,7 +52,16 @@ export function HomeModule({ onExplore }: HomeModuleProps) {
           <Button size="lg" variant="neon" onClick={onExplore} className="gap-3 h-16 px-12 rounded-full font-black tracking-widest shadow-2xl shadow-white/10 group">
             Start Exploring <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Button>
-          <Button size="lg" variant="secondary" className="h-16 px-12 rounded-full font-black tracking-widest bg-white/5 border-white/10 text-white/60">Documentation</Button>
+          
+          {user?.isGuest ? (
+            <Button size="lg" variant="secondary" onClick={onLogin} className="h-16 px-12 rounded-full font-black tracking-widest bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all">
+              Sign In with Google
+            </Button>
+          ) : (
+            <Button size="lg" variant="secondary" onClick={onExplore} className="h-16 px-12 rounded-full font-black tracking-widest bg-white/5 border-white/10 text-white/60">
+              Welcome, {user?.displayName?.split(' ')[0]}
+            </Button>
+          )}
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-40 w-full max-w-5xl">

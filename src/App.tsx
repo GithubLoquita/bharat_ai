@@ -16,6 +16,8 @@ import { ChatModule } from './pages/ChatModule';
 import { StudioModule } from './pages/StudioModule';
 import { ImageModule } from './pages/ImageModule';
 import { SpecializedModule } from './pages/SpecializedModule';
+import { SettingsModule } from './pages/SettingsModule';
+import { HistoryModule } from './pages/HistoryModule';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -36,6 +38,10 @@ export default function App() {
 
     setIsSearching(true);
     try {
+      if (!auth.currentUser) {
+        setSearchResults({ chats: [], images: [] });
+        return;
+      }
       const chatQuery = query(collection(db, 'chats'), where('userId', '==', user.uid));
       const imageQuery = query(collection(db, 'images'), where('userId', '==', user.uid));
       
@@ -101,6 +107,18 @@ export default function App() {
     };
   }, []);
 
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      setUser(result.user);
+      toast.success(`Welcome, ${result.user.displayName}`);
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      toast.error("Google login failed. Please try again.");
+    }
+  };
+
   const handleLogout = async () => {
     if (user?.isGuest) {
       toast.info("Guest session remains active");
@@ -135,7 +153,7 @@ export default function App() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'home': return <HomeModule onExplore={() => setActiveTab('chat')} />;
+      case 'home': return <HomeModule onExplore={() => setActiveTab('chat')} onLogin={handleLogin} user={user} />;
       case 'chat': return <ChatModule user={user} />;
       case 'studio': return <StudioModule user={user} />;
       case 'images': return <ImageModule user={user} />;
@@ -143,6 +161,10 @@ export default function App() {
       case 'edu':
       case 'business':
         return <SpecializedModule type={activeTab} />;
+      case 'settings':
+        return <SettingsModule user={user} onLogout={handleLogout} />;
+      case 'history':
+        return <HistoryModule user={user} />;
       default: return (
         <div className="flex flex-col items-center justify-center h-full text-white/40 space-y-6">
           <Sparkles className="w-16 h-16 animate-pulse" />
@@ -185,6 +207,7 @@ export default function App() {
               )}
             >
               <Sidebar 
+                user={user}
                 activeTab={activeTab} 
                 setActiveTab={(tab) => {
                   setActiveTab(tab);
