@@ -68,7 +68,7 @@ export function SpecializedModule({ type }: { type: string }) {
 
     try {
       const chat = ai.chats.create({
-        model: "gemini-1.5-flash",
+        model: "gemini-3-flash-preview",
         config: { systemInstruction: p.systemPrompt },
         history: messages.map(m => ({
           role: m.role,

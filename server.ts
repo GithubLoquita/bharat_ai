@@ -9,8 +9,38 @@ import { GoogleGenAI } from "@google/genai";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize Gemini on server
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+// Get API Key from environment
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+// Initialize Gemini on server with validation
+let ai: any = null;
+
+if (GEMINI_API_KEY) {
+  ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  console.log(`[Startup] Gemini API Key detected (Source: ${process.env.GEMINI_API_KEY ? 'GEMINI_API_KEY' : 'GOOGLE_API_KEY'})`);
+} else {
+  console.error(`[Critical] No Gemini API Key found. Please set GEMINI_API_KEY or GOOGLE_API_KEY.`);
+}
+
+async function validateGeminiKey() {
+  if (!ai) return false;
+  try {
+    // Minimal probe using correct @google/genai syntax
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: "ping"
+    });
+    
+    if (response && response.text) {
+      console.log("[Startup] Gemini API connection validated successfully.");
+      return true;
+    }
+    throw new Error("Empty response from model");
+  } catch (error: any) {
+    console.error("[Startup] Gemini API Key validation failed:", error.message);
+    return false;
+  }
+}
 
 async function startServer() {
   const app = express();
@@ -19,6 +49,9 @@ async function startServer() {
 
   console.log(`[Startup] Initializing Bhart AI Server...`);
   console.log(`[Startup] Environment: ${isProduction ? 'Production' : 'Development'}`);
+
+  // Validate AI at startup
+  await validateGeminiKey();
 
   // CORS Configuration for Vercel
   app.use(cors({
@@ -35,7 +68,8 @@ async function startServer() {
       status: "ok", 
       mode: process.env.NODE_ENV,
       port: PORT,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      apiKeyDetected: !!GEMINI_API_KEY
     });
   });
 
