@@ -1,13 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Plus, Paperclip, Mic, StopCircle, Trash2, Languages, Globe2, Sparkles, User as UserIcon, Bot, ChevronDown, History, X, MessageSquare } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { ai } from '../lib/gemini';
+import { ai as systemAi } from '../lib/gemini';
+import { GoogleGenAI } from "@google/genai";
 import Markdown from 'react-markdown';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { useSettings } from '../context/SettingsContext';
 
 interface Message {
   id: string;
@@ -23,6 +25,7 @@ interface Chat {
 }
 
 export function ChatModule({ user }: { user: any }) {
+  const { keys, prefs } = useSettings();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -30,6 +33,20 @@ export function ChatModule({ user }: { user: any }) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Initialize AI engine based on personal or system keys
+  const ai = useMemo(() => {
+    if (prefs.defaultProvider !== 'gemini') {
+      console.warn(`[Chat] Multi-provider logic for ${prefs.defaultProvider} is initializing...`);
+      // Future integration for OpenAI/Claude/etc.
+    }
+    
+    if (keys.gemini) {
+      console.log("[Chat] Using personal Gemini stack");
+      return new GoogleGenAI({ apiKey: keys.gemini });
+    }
+    return systemAi;
+  }, [keys.gemini, prefs.defaultProvider]);
 
   // Fetch chats
   useEffect(() => {

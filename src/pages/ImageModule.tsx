@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ImageIcon, Wand2, Download, Trash2, LayoutGrid, Search, Sparkles, AlertCircle } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { ai } from '../lib/gemini';
+import { ai as systemAi } from '../lib/gemini';
+import { GoogleGenAI } from "@google/genai";
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { useSettings } from '../context/SettingsContext';
 
 interface GeneratedImage {
   id: string;
@@ -16,10 +18,19 @@ interface GeneratedImage {
 }
 
 export function ImageModule({ user }: { user: any }) {
+  const { keys } = useSettings();
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [aspectRatio, setAspectRatio] = useState('1:1');
+
+  // Dynamic AI instance
+  const ai = useMemo(() => {
+    if (keys.gemini) {
+      return new GoogleGenAI({ apiKey: keys.gemini });
+    }
+    return systemAi;
+  }, [keys.gemini]);
 
   useEffect(() => {
     if (!user || !auth.currentUser) {

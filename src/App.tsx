@@ -18,6 +18,7 @@ import { ImageModule } from './pages/ImageModule';
 import { SpecializedModule } from './pages/SpecializedModule';
 import { SettingsModule } from './pages/SettingsModule';
 import { HistoryModule } from './pages/HistoryModule';
+import { SettingsProvider } from './context/SettingsContext';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -175,7 +176,8 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-black overflow-hidden font-sans relative">
+    <SettingsProvider user={user}>
+      <div className="flex h-screen bg-black overflow-hidden font-sans relative">
       <Toaster position="bottom-right" theme="dark" />
       
       {/* Sidebar - Desktop & Mobile Drawer */}
@@ -369,6 +371,7 @@ export default function App() {
         </div>
       </main>
     </div>
+    </SettingsProvider>
   );
 }
 

@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Save, Trash2, Database, Sliders, Code2, Sparkles, Terminal, Copy, Check } from 'lucide-react';
-import { ai } from '../lib/gemini';
+import { ai as systemAi } from '../lib/gemini';
+import { GoogleGenAI } from "@google/genai";
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import Markdown from 'react-markdown';
+import { useSettings } from '../context/SettingsContext';
 
 export function StudioModule({ user }: { user: any }) {
+  const { keys } = useSettings();
   const [systemPrompt, setSystemPrompt] = useState('You are Bhart AI, an expert software architect and assistant. Be concise, technical, and helpful.');
   const [userPrompt, setUserPrompt] = useState('');
   const [temperature, setTemperature] = useState(0.7);
@@ -15,6 +18,15 @@ export function StudioModule({ user }: { user: any }) {
   const [output, setOutput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+
+  // Dynamic AI instance
+  const ai = useMemo(() => {
+    if (keys.gemini) {
+      return new GoogleGenAI({ apiKey: keys.gemini });
+    }
+    return systemAi;
+  }, [keys.gemini]);
+
 
   const runTest = async () => {
     if (!userPrompt.trim() || isExecuting) return;

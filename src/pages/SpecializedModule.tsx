@@ -1,11 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare, Sparkles, Send, BrainCircuit, GraduationCap, Briefcase, Bot, User as UserIcon, HelpCircle } from 'lucide-react';
-import { ai } from '../lib/gemini';
+import { ai as systemAi } from '../lib/gemini';
+import { GoogleGenAI } from "@google/genai";
 import Markdown from 'react-markdown';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
+import { useSettings } from '../context/SettingsContext';
 
 interface Personality {
   id: string;
@@ -44,11 +46,21 @@ const personalities: Record<string, Personality> = {
 };
 
 export function SpecializedModule({ type }: { type: string }) {
+  const { keys } = useSettings();
   const p = personalities[type] || personalities.wellness;
   const [messages, setMessages] = useState<{role: 'user' | 'model', content: string}[]>([]);
   const [input, setInput] = useState('');
   const [isBusy, setIsBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic AI instance
+  const ai = useMemo(() => {
+    if (keys.gemini) {
+      return new GoogleGenAI({ apiKey: keys.gemini });
+    }
+    return systemAi;
+  }, [keys.gemini]);
+
 
   useEffect(() => {
     setMessages([]);
