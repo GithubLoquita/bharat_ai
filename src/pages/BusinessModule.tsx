@@ -509,6 +509,145 @@ export function BusinessModule() {
     );
   };
 
+  const AddInvoiceModal = () => {
+    const [invForm, setInvForm] = useState({
+      customerId: '',
+      customerName: '',
+      invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      items: [{ description: '', quantity: 1, rate: 0 }]
+    });
+
+    const addItem = () => setInvForm(p => ({ ...p, items: [...p.items, { description: '', quantity: 1, rate: 0 }] }));
+    const removeItem = (idx: number) => setInvForm(p => ({ ...p, items: p.items.filter((_, i) => i !== idx) }));
+    
+    const calculateTotal = () => invForm.items.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
+
+    const saveInvoice = async () => {
+      if (!user || !invForm.customerId) {
+        toast.error("Please select a customer");
+        return;
+      }
+      try {
+        await addDoc(collection(db, 'invoices'), {
+          ...invForm,
+          userId: user.uid,
+          total: calculateTotal(),
+          status: 'Draft',
+          createdAt: serverTimestamp()
+        });
+        toast.success("Invoice created successfully");
+        setShowInvoiceModal(false);
+      } catch (err) {
+        toast.error("Failed to create invoice");
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-3xl">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl bg-[#0A0A0A] border border-white/10 p-12 rounded-[4rem] shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+           <button onClick={() => setShowInvoiceModal(false)} className="absolute top-10 right-10 text-white/20 hover:text-white"><X className="w-6 h-6" /></button>
+           
+           <div className="space-y-2 mb-10">
+             <h2 className="text-3xl font-black text-white px-2 tracking-tight">Generate Invoice</h2>
+             <p className="text-white/20 text-[10px] font-black uppercase tracking-widest px-2">Professional Billing System</p>
+           </div>
+
+           <div className="space-y-8">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Client Selection</label>
+                   <select 
+                     className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-2xl px-6 text-white text-sm outline-none focus:border-white/20"
+                     value={invForm.customerId}
+                     onChange={(e) => {
+                       const c = customers.find(x => x.id === e.target.value);
+                       setInvForm(p => ({ ...p, customerId: e.target.value, customerName: c?.name || '' }));
+                     }}
+                   >
+                     <option value="">Select from CRM...</option>
+                     {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.company})</option>)}
+                   </select>
+                </div>
+                <div className="space-y-3">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Due Date</label>
+                   <input 
+                     type="date"
+                     className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-2xl px-6 text-white" 
+                     value={invForm.dueDate}
+                     onChange={e => setInvForm(p => ({ ...p, dueDate: e.target.value }))}
+                   />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Line Items</p>
+                    <button onClick={addItem} className="text-brand text-[10px] font-black hover:underline uppercase tracking-widest flex items-center gap-1.5">
+                       <Plus className="w-3.2 h-3.2" /> Add Item
+                    </button>
+                 </div>
+                 
+                 <div className="space-y-3">
+                   {invForm.items.map((item, idx) => (
+                     <div key={idx} className="flex gap-4 group">
+                        <input 
+                          className="flex-1 h-12 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-sm text-white" 
+                          placeholder="Legal Consulting..."
+                          value={item.description}
+                          onChange={e => {
+                            const newItems = [...invForm.items];
+                            newItems[idx].description = e.target.value;
+                            setInvForm(p => ({ ...p, items: newItems }));
+                          }}
+                        />
+                        <input 
+                          type="number"
+                          className="w-20 h-12 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-sm text-white" 
+                          placeholder="Qty"
+                          value={item.quantity}
+                          onChange={e => {
+                            const newItems = [...invForm.items];
+                            newItems[idx].quantity = Number(e.target.value);
+                            setInvForm(p => ({ ...p, items: newItems }));
+                          }}
+                        />
+                        <input 
+                          type="number"
+                          className="w-28 h-12 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-sm text-white" 
+                          placeholder="Rate"
+                          value={item.rate}
+                          onChange={e => {
+                            const newItems = [...invForm.items];
+                            newItems[idx].rate = Number(e.target.value);
+                            setInvForm(p => ({ ...p, items: newItems }));
+                          }}
+                        />
+                        {invForm.items.length > 1 && (
+                          <button onClick={() => removeItem(idx)} className="p-3 text-white/10 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                             <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                     </div>
+                   ))}
+                 </div>
+              </div>
+
+              <div className="pt-8 border-t border-white/5 flex items-center justify-between px-2">
+                 <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Total Amount</p>
+                    <p className="text-4xl font-black text-white">${calculateTotal().toLocaleString()}</p>
+                 </div>
+                 <Button onClick={saveInvoice} variant="neon" className="h-16 px-12 rounded-[2rem] font-black text-base shadow-2xl">
+                    Finalize Invoice
+                 </Button>
+              </div>
+           </div>
+        </motion.div>
+      </div>
+    );
+  };
+
   if (isLoading) return <div className="h-full bg-black" />;
 
   return (
@@ -568,6 +707,7 @@ export function BusinessModule() {
       </main>
 
       {showCustomerModal && <AddCustomerModal />}
+      {showInvoiceModal && <AddInvoiceModal />}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
