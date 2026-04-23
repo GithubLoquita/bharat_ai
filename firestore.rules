@@ -69,6 +69,11 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
+    // Public collection for connection testing
+    match /test-connection/{docId} {
+      allow read: if true;
+    }
+
     match /studio/{promptId} {
       allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;

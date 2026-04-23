@@ -72,9 +72,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "userId", "name"]
+    },
+    "TestConnection": {
+      "title": "Connection Test",
+      "description": "Minimal heart-beat document for connectivity checks.",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string" }
+      }
     }
   },
   "firestore": {
+    "test-connection/{docId}": {
+      "schema": "TestConnection",
+      "description": "Publicly readable collection for application health checks."
+    },
     "users/{userId}": {
       "schema": "User",
       "description": "Protected user profiles."
