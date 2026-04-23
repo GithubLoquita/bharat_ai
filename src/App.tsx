@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Button } from './components/ui/Button';
 import { auth, db } from './lib/firebase';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, signInAnonymously, type User } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Toaster, toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -83,7 +83,14 @@ export default function App() {
       if (authUser) {
         setUser(authUser);
       } else {
-        setUser(guestUser);
+        try {
+          const cred = await signInAnonymously(auth);
+          setUser(cred.user);
+        } catch (err: any) {
+          // If anonymous auth is disabled or fails, use the mock guest identity
+          console.warn("Firebase Anonymous Auth not available. Using local guest mode.", err.message);
+          setUser(guestUser);
+        }
       }
       setLoading(false);
     });

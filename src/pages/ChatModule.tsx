@@ -33,7 +33,7 @@ export function ChatModule({ user }: { user: any }) {
 
   // Fetch chats
   useEffect(() => {
-    if (!user) return;
+    if (!user || !auth.currentUser) return;
     const q = query(
       collection(db, 'chats'),
       where('userId', '==', user.uid),
@@ -41,13 +41,15 @@ export function ChatModule({ user }: { user: any }) {
     );
     return onSnapshot(q, (snapshot) => {
       setChats(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chat)));
+    }, (error) => {
+      console.warn("Firestore access denied:", error.message);
     });
   }, [user]);
 
   // Fetch messages
   useEffect(() => {
-    if (!activeChatId) {
-      setMessages([]);
+    if (!activeChatId || !auth.currentUser) {
+      if (!activeChatId) setMessages([]);
       return;
     }
     const q = query(
@@ -56,6 +58,8 @@ export function ChatModule({ user }: { user: any }) {
     );
     return onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)));
+    }, (error) => {
+      console.warn("Firestore message access denied:", error.message);
     });
   }, [activeChatId]);
 
@@ -144,7 +148,9 @@ export function ChatModule({ user }: { user: any }) {
     console.log("[Chat] handleSend triggered"); // Production-safe debug logging
     
     let chatId = activeChatId;
-    if (!chatId) {
+    const isLocalMode = !auth.currentUser;
+
+    if (!chatId && !isLocalMode) {
       const docRef = await addDoc(collection(db, 'chats'), {
         userId: user.uid,
         title: inputValue.slice(0, 30) + '...',
@@ -156,48 +162,67 @@ export function ChatModule({ user }: { user: any }) {
     }
 
     const userMsg = inputValue;
+    const currentHistory = messages.map(m => ({
+      role: m.role,
+      parts: [{ text: m.content }]
+    }));
+    
     setInputValue('');
     
-    // Add user message to Firestore
-    await addDoc(collection(db, 'chats', chatId, 'messages'), {
-      role: 'user',
-      content: userMsg,
-      createdAt: serverTimestamp(),
-    });
-
-    // Update chat title if it's the first message
-    if (messages.length === 0) {
-      await updateDoc(doc(db, 'chats', chatId), {
-        title: userMsg.slice(0, 40) + (userMsg.length > 40 ? '...' : ''),
-        updatedAt: serverTimestamp(),
+    // Add user message
+    if (isLocalMode) {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'user',
+        content: userMsg,
+        createdAt: new Date()
+      }]);
+    } else if (chatId) {
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        role: 'user',
+        content: userMsg,
+        createdAt: serverTimestamp(),
       });
+
+      // Update chat title if it's the first message
+      if (messages.length === 0) {
+        await updateDoc(doc(db, 'chats', chatId), {
+          title: userMsg.slice(0, 40) + (userMsg.length > 40 ? '...' : ''),
+          updatedAt: serverTimestamp(),
+        });
+      }
     }
 
     setIsStreaming(true);
     
     try {
       const chat = ai.chats.create({
-        model: "gemini-3-flash-preview",
-        history: messages.map(m => ({
-          role: m.role,
-          parts: [{ text: m.content }]
-        }))
+        model: "gemini-1.5-flash",
+        history: currentHistory
       });
 
       console.log("[Chat] Sending message to Gemini...");
       const result = await chat.sendMessage({ message: userMsg });
       const fullText = result.text || "";
 
-      await addDoc(collection(db, 'chats', chatId, 'messages'), {
-        role: 'model',
-        content: fullText,
-        createdAt: serverTimestamp(),
-      });
-      
-      await updateDoc(doc(db, 'chats', chatId), {
-        updatedAt: serverTimestamp(),
-      });
-
+      if (isLocalMode) {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          content: fullText,
+          createdAt: new Date()
+        }]);
+      } else if (chatId) {
+        await addDoc(collection(db, 'chats', chatId, 'messages'), {
+          role: 'model',
+          content: fullText,
+          createdAt: serverTimestamp(),
+        });
+        
+        await updateDoc(doc(db, 'chats', chatId), {
+          updatedAt: serverTimestamp(),
+        });
+      }
     } catch (error: any) {
       console.error("[Chat] Error:", error);
       toast.error("AI response failed. Please check your connection.");
