@@ -1,4 +1,4 @@
-import { type LucideIcon, MessageSquare, LayoutGrid, Image as ImageIcon, BrainCircuit, GraduationCap, Briefcase, Zap, Settings, History, Sparkles, Home, X } from 'lucide-react';
+import { type LucideIcon, MessageSquare, LayoutGrid, Image as ImageIcon, BrainCircuit, GraduationCap, Briefcase, Zap, Settings, History, Sparkles, Home, X, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 
@@ -19,6 +19,8 @@ const navItems: NavItem[] = [
   { id: 'business', label: 'Business', icon: Briefcase },
   { id: 'history', label: 'History', icon: History },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'about', label: 'About', icon: Globe },
+  { id: 'careers', label: 'Careers', icon: Briefcase },
 ];
 
 interface SidebarProps {

@@ -19,25 +19,17 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'sandiphembram2021@gmail.com' && request.auth.token.email_verified == true;
+    }
+
     // Entity Validations
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'role']) 
-        && data.uid == request.auth.uid 
-        && data.role in ['free', 'pro', 'business'];
+    function isValidJob(data) {
+      return data.keys().hasAll(['title', 'department', 'location', 'type']);
     }
 
-    function isValidChat(data) {
-      return data.keys().hasAll(['userId', 'title']) 
-        && data.userId == request.auth.uid;
-    }
-
-    function isValidMessage(data) {
-      return data.keys().hasAll(['role', 'content']);
-    }
-
-    function isValidImage(data) {
-      return data.keys().hasAll(['userId', 'prompt', 'url']) 
-        && data.userId == request.auth.uid;
+    function isValidApplication(data) {
+      return data.keys().hasAll(['jobId', 'name', 'email']);
     }
 
     // Match blocks
@@ -51,6 +43,16 @@ service cloud.firestore {
       match /config/{configId} {
         allow read, write: if isOwner(userId);
       }
+    }
+
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /applications/{appId} {
+      allow create: if true;
+      allow read, write: if isAdmin();
     }
 
     match /chats/{chatId} {

@@ -90,6 +90,40 @@
         "preferences": { "type": "object" },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Job": {
+      "title": "Job Listing",
+      "description": "Information about an open position.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "department": { "type": "string" },
+        "location": { "type": "string" },
+        "type": { "type": "string", "enum": ["Remote", "Onsite", "Hybrid"] },
+        "description": { "type": "string" },
+        "requirements": { "type": "array", "items": { "type": "string" } },
+        "isInternship": { "type": "boolean" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "department", "location", "type"]
+    },
+    "Application": {
+      "title": "Job Application",
+      "description": "Submission from a candidate.",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "resumeUrl": { "type": "string" },
+        "portfolioUrl": { "type": "string" },
+        "note": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "reviewing", "interviewing", "rejected", "hired"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["jobId", "name", "email"]
     }
   },
   "firestore": {
@@ -120,6 +154,14 @@
     "users/{userId}/config/{configId}": {
       "schema": "UserSettings",
       "description": "Encrypted infrastructure configuration."
+    },
+    "jobs/{jobId}": {
+      "schema": "Job",
+      "description": "Public job listings."
+    },
+    "applications/{applicationId}": {
+      "schema": "Application",
+      "description": "Submitted candidate applications."
     }
   }
 }

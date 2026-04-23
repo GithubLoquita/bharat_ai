@@ -18,6 +18,8 @@ import { ImageModule } from './pages/ImageModule';
 import { SpecializedModule } from './pages/SpecializedModule';
 import { SettingsModule } from './pages/SettingsModule';
 import { HistoryModule } from './pages/HistoryModule';
+import { AboutModule } from './pages/AboutModule';
+import { CareersModule } from './pages/CareersModule';
 import { SettingsProvider } from './context/SettingsContext';
 
 export default function App() {
@@ -166,6 +168,10 @@ export default function App() {
         return <SettingsModule user={user} onLogout={handleLogout} />;
       case 'history':
         return <HistoryModule user={user} />;
+      case 'about':
+        return <AboutModule />;
+      case 'careers':
+        return <CareersModule />;
       default: return (
         <div className="flex flex-col items-center justify-center h-full text-white/40 space-y-6">
           <Sparkles className="w-16 h-16 animate-pulse" />
