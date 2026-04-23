@@ -48,9 +48,13 @@ interface Invoice {
   customerId: string;
   customerName: string;
   items: InvoiceItem[];
+  subtotal: number;
+  taxRate: number;
+  discount: number;
   total: number;
   status: 'Draft' | 'Sent' | 'Paid';
   dueDate: string;
+  notes?: string;
   createdAt: any;
 }
 
@@ -105,6 +109,7 @@ export function BusinessModule() {
   // Modals
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   // --- Sync Logic ---
@@ -178,13 +183,29 @@ export function BusinessModule() {
       startY: 85,
       head: [['Description', 'Qty', 'Rate', 'Amount']],
       body: tableData,
-      theme: 'striped',
-      headStyles: { fillStyle: '#111' }
+      theme: 'grid',
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 10 }
     });
 
     const finalY = doc.lastAutoTable.finalY + 10;
+    
+    // Summary
+    doc.setFontSize(10);
+    doc.text(`Subtotal: $${(inv.subtotal || inv.total).toFixed(2)}`, 190, finalY, { align: 'right' });
+    if (inv.taxRate) doc.text(`Tax (${inv.taxRate}%): $${((inv.subtotal * inv.taxRate) / 100).toFixed(2)}`, 190, finalY + 5, { align: 'right' });
+    if (inv.discount) doc.text(`Discount: -$${inv.discount.toFixed(2)}`, 190, finalY + 10, { align: 'right' });
+    
     doc.setFontSize(14);
-    doc.text(`Total: $${inv.total.toFixed(2)}`, 190, finalY, { align: 'right' });
+    doc.setFont(undefined, 'bold');
+    doc.text(`Total: $${inv.total.toFixed(2)}`, 190, finalY + 20, { align: 'right' });
+
+    if (inv.notes) {
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text("Notes:", 20, finalY + 35);
+      doc.text(inv.notes, 20, finalY + 42, { maxWidth: 170 });
+    }
 
     doc.save(`Invoice_${inv.invoiceNumber}.pdf`);
     toast.success("Exported to PDF");
@@ -361,7 +382,7 @@ export function BusinessModule() {
               </thead>
               <tbody className="divide-y divide-white/5">
                  {invoices.map(inv => (
-                   <tr key={inv.id} className="hover:bg-white/[0.02] transition-colors group">
+                   <tr key={inv.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => setSelectedInvoice(inv)}>
                       <td className="px-10 py-8">
                         <p className="font-bold text-white tracking-tight">{inv.invoiceNumber}</p>
                         <p className="text-[10px] text-white/20 font-black uppercase tracking-widest mt-0.5">Aug 2024</p>
@@ -383,12 +404,14 @@ export function BusinessModule() {
                         <p className="text-lg font-black text-white">${inv.total.toLocaleString()}</p>
                       </td>
                       <td className="px-10 py-8 text-right">
-                         <div className="flex items-center justify-end gap-2">
+                         <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                             <Button variant="outline" size="icon" className="w-10 h-10 border-white/5 bg-white/5 text-white/20 hover:text-white" onClick={() => generatePDF(inv)}>
                               <Download className="w-4 h-4" />
                             </Button>
-                            <Button variant="outline" size="icon" className="w-10 h-10 border-white/5 bg-white/5 text-white/20 hover:text-white">
-                              <Send className="w-4 h-4" />
+                            <Button variant="outline" size="icon" className="w-10 h-10 border-white/5 bg-white/5 text-white/20 hover:text-white" onClick={() => {
+                              window.confirm(`Mark invoice ${inv.invoiceNumber} as paid?`) && updateDoc(doc(db, 'invoices', inv.id), { status: 'Paid' });
+                            }}>
+                              <CheckCircle2 className="w-4 h-4" />
                             </Button>
                          </div>
                       </td>
@@ -515,13 +538,18 @@ export function BusinessModule() {
       customerName: '',
       invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      items: [{ description: '', quantity: 1, rate: 0 }]
+      items: [{ description: '', quantity: 1, rate: 0 }],
+      taxRate: 18,
+      discount: 0,
+      notes: ''
     });
 
     const addItem = () => setInvForm(p => ({ ...p, items: [...p.items, { description: '', quantity: 1, rate: 0 }] }));
     const removeItem = (idx: number) => setInvForm(p => ({ ...p, items: p.items.filter((_, i) => i !== idx) }));
     
-    const calculateTotal = () => invForm.items.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
+    const subtotal = invForm.items.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
+    const taxAmount = (subtotal * invForm.taxRate) / 100;
+    const total = subtotal + taxAmount - invForm.discount;
 
     const saveInvoice = async () => {
       if (!user || !invForm.customerId) {
@@ -532,7 +560,8 @@ export function BusinessModule() {
         await addDoc(collection(db, 'invoices'), {
           ...invForm,
           userId: user.uid,
-          total: calculateTotal(),
+          subtotal,
+          total,
           status: 'Draft',
           createdAt: serverTimestamp()
         });
@@ -545,20 +574,20 @@ export function BusinessModule() {
 
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-3xl">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl bg-[#0A0A0A] border border-white/10 p-12 rounded-[4rem] shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl bg-[#0A0A0A] border border-white/10 p-10 rounded-[3.5rem] shadow-2xl relative max-h-[95vh] overflow-y-auto custom-scrollbar">
            <button onClick={() => setShowInvoiceModal(false)} className="absolute top-10 right-10 text-white/20 hover:text-white"><X className="w-6 h-6" /></button>
            
-           <div className="space-y-2 mb-10">
-             <h2 className="text-3xl font-black text-white px-2 tracking-tight">Generate Invoice</h2>
-             <p className="text-white/20 text-[10px] font-black uppercase tracking-widest px-2">Professional Billing System</p>
+           <div className="space-y-2 mb-8 px-2">
+             <h2 className="text-3xl font-black text-white tracking-tight">Generate Invoice</h2>
+             <p className="text-white/20 text-[10px] font-black uppercase tracking-widest">Enterprise Billing System • GST Ready</p>
            </div>
 
-           <div className="space-y-8">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Client Selection</label>
+           <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2.5">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Client</label>
                    <select 
-                     className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-2xl px-6 text-white text-sm outline-none focus:border-white/20"
+                     className="w-full h-12 bg-white/[0.03] border border-white/5 rounded-2xl px-6 text-white text-xs outline-none focus:border-white/20"
                      value={invForm.customerId}
                      onChange={(e) => {
                        const c = customers.find(x => x.id === e.target.value);
@@ -566,14 +595,14 @@ export function BusinessModule() {
                      }}
                    >
                      <option value="">Select from CRM...</option>
-                     {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.company})</option>)}
+                     {customers.map(c => <option key={c.id} value={c.id} className="bg-black text-white">{c.name}</option>)}
                    </select>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                    <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Due Date</label>
                    <input 
                      type="date"
-                     className="w-full h-14 bg-white/[0.03] border border-white/5 rounded-2xl px-6 text-white" 
+                     className="w-full h-12 bg-white/[0.03] border border-white/5 rounded-2xl px-6 text-white text-xs" 
                      value={invForm.dueDate}
                      onChange={e => setInvForm(p => ({ ...p, dueDate: e.target.value }))}
                    />
@@ -582,18 +611,18 @@ export function BusinessModule() {
 
               <div className="space-y-4">
                  <div className="flex items-center justify-between px-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Line Items</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Items</p>
                     <button onClick={addItem} className="text-brand text-[10px] font-black hover:underline uppercase tracking-widest flex items-center gap-1.5">
-                       <Plus className="w-3.2 h-3.2" /> Add Item
+                       <Plus className="w-3 h-3" /> Add Item
                     </button>
                  </div>
                  
-                 <div className="space-y-3">
+                 <div className="space-y-2.5">
                    {invForm.items.map((item, idx) => (
-                     <div key={idx} className="flex gap-4 group">
+                     <div key={idx} className="flex gap-3 group">
                         <input 
-                          className="flex-1 h-12 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-sm text-white" 
-                          placeholder="Legal Consulting..."
+                          className="flex-1 h-11 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-xs text-white" 
+                          placeholder="Description..."
                           value={item.description}
                           onChange={e => {
                             const newItems = [...invForm.items];
@@ -603,7 +632,7 @@ export function BusinessModule() {
                         />
                         <input 
                           type="number"
-                          className="w-20 h-12 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-sm text-white" 
+                          className="w-16 h-11 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-xs text-white" 
                           placeholder="Qty"
                           value={item.quantity}
                           onChange={e => {
@@ -614,7 +643,7 @@ export function BusinessModule() {
                         />
                         <input 
                           type="number"
-                          className="w-28 h-12 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-sm text-white" 
+                          className="w-24 h-11 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-xs text-white" 
                           placeholder="Rate"
                           value={item.rate}
                           onChange={e => {
@@ -624,8 +653,8 @@ export function BusinessModule() {
                           }}
                         />
                         {invForm.items.length > 1 && (
-                          <button onClick={() => removeItem(idx)} className="p-3 text-white/10 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                             <Trash2 className="w-4 h-4" />
+                          <button onClick={() => removeItem(idx)} className="p-2 text-white/10 hover:text-red-500 transition-all shrink-0">
+                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                      </div>
@@ -633,16 +662,113 @@ export function BusinessModule() {
                  </div>
               </div>
 
-              <div className="pt-8 border-t border-white/5 flex items-center justify-between px-2">
-                 <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Total Amount</p>
-                    <p className="text-4xl font-black text-white">${calculateTotal().toLocaleString()}</p>
+              <div className="grid grid-cols-2 gap-4 py-4 border-t border-white/5">
+                 <div className="space-y-2.5">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Tax Rate (%)</label>
+                   <input type="number" className="w-full h-11 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-xs text-white" value={invForm.taxRate} onChange={e => setInvForm(p => ({ ...p, taxRate: Number(e.target.value) }))} />
                  </div>
-                 <Button onClick={saveInvoice} variant="neon" className="h-16 px-12 rounded-[2rem] font-black text-base shadow-2xl">
-                    Finalize Invoice
+                 <div className="space-y-2.5">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Discount ($)</label>
+                   <input type="number" className="w-full h-11 bg-white/[0.02] border border-white/5 rounded-xl px-4 text-xs text-white" value={invForm.discount} onChange={e => setInvForm(p => ({ ...p, discount: Number(e.target.value) }))} />
+                 </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Terms / Notes</label>
+                <textarea 
+                  className="w-full h-20 bg-white/[0.02] border border-white/5 rounded-xl px-4 py-3 text-xs text-white resize-none" 
+                  placeholder="Thank you for your business..."
+                  value={invForm.notes}
+                  onChange={e => setInvForm(p => ({ ...p, notes: e.target.value }))}
+                />
+              </div>
+
+              <div className="pt-6 border-t border-white/5 flex items-center justify-between px-2">
+                 <div className="space-y-0.5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Final Total</p>
+                    <p className="text-3xl font-black text-white">${total.toLocaleString()}</p>
+                 </div>
+                 <Button onClick={saveInvoice} variant="neon" className="h-14 px-10 rounded-2xl font-black text-sm shadow-2xl">
+                    Finalize & Save
                  </Button>
               </div>
            </div>
+        </motion.div>
+      </div>
+    );
+  };
+
+  const InvoiceDetailModal = () => {
+    if (!selectedInvoice) return null;
+    return (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-black/95 backdrop-blur-3xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-3xl bg-[#0A0A0A] border border-white/10 p-12 rounded-[4rem] shadow-2xl relative overflow-y-auto max-h-[90vh] custom-scrollbar">
+          <button onClick={() => setSelectedInvoice(null)} className="absolute top-10 right-10 text-white/20 hover:text-white"><X className="w-6 h-6" /></button>
+          
+          <div className="flex items-center justify-between mb-12">
+            <div className="space-y-2">
+               <h2 className="text-4xl font-black text-white tracking-tighter">{selectedInvoice.invoiceNumber}</h2>
+               <div className="flex items-center gap-3">
+                  <span className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                    selectedInvoice.status === 'Paid' ? "bg-green-500/10 text-green-500" : "bg-amber-500/10 text-amber-500"
+                  )}>{selectedInvoice.status}</span>
+                  <span className="text-white/20 text-[10px] font-black uppercase tracking-widest">Created on {selectedInvoice.createdAt?.toDate().toLocaleDateString()}</span>
+               </div>
+            </div>
+            <Button onClick={() => generatePDF(selectedInvoice)} className="rounded-full h-12 px-6 gap-2 bg-white text-black font-black uppercase text-[10px] tracking-widest transition-transform hover:scale-105 active:scale-95">
+              <Download className="w-4 h-4" /> Download PDF
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-12 mb-12">
+             <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Client Details</p>
+                <p className="text-xl font-bold text-white">{selectedInvoice.customerName}</p>
+             </div>
+             <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Payment Due</p>
+                <p className="text-xl font-bold text-white">{selectedInvoice.dueDate}</p>
+             </div>
+          </div>
+
+          <div className="space-y-6 mb-12">
+             <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Itemized Summary</p>
+             <div className="space-y-3">
+               {selectedInvoice.items.map((item, i) => (
+                 <div key={i} className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5">
+                    <div className="space-y-1">
+                       <p className="font-bold text-white">{item.description}</p>
+                       <p className="text-xs text-white/40">{item.quantity} × ${item.rate.toFixed(2)}</p>
+                    </div>
+                    <p className="font-black text-white">${(item.quantity * item.rate).toFixed(2)}</p>
+                 </div>
+               ))}
+             </div>
+          </div>
+
+          <div className="pt-10 border-t border-white/5 flex flex-col items-end gap-3">
+             <div className="flex justify-between w-64 text-sm">
+                <span className="text-white/40">Subtotal</span>
+                <span className="text-white">${selectedInvoice.subtotal?.toFixed(2)}</span>
+             </div>
+             {selectedInvoice.taxRate > 0 && (
+               <div className="flex justify-between w-64 text-sm">
+                  <span className="text-white/40">Tax ({selectedInvoice.taxRate}%)</span>
+                  <span className="text-white">${((selectedInvoice.subtotal * selectedInvoice.taxRate) / 100).toFixed(2)}</span>
+               </div>
+             )}
+             {selectedInvoice.discount > 0 && (
+               <div className="flex justify-between w-64 text-sm">
+                  <span className="text-white/40">Discount</span>
+                  <span className="text-red-400">-${selectedInvoice.discount.toFixed(2)}</span>
+               </div>
+             )}
+             <div className="flex justify-between w-64 pt-4 mt-2 border-t border-white/10">
+                <span className="text-lg font-black text-white">Grand Total</span>
+                <span className="text-2xl font-black text-brand">${selectedInvoice.total.toLocaleString()}</span>
+             </div>
+          </div>
         </motion.div>
       </div>
     );
@@ -708,6 +834,7 @@ export function BusinessModule() {
 
       {showCustomerModal && <AddCustomerModal />}
       {showInvoiceModal && <AddInvoiceModal />}
+      {selectedInvoice && <InvoiceDetailModal />}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
