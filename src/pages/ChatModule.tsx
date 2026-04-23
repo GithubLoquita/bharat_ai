@@ -4,7 +4,6 @@ import { Send, Plus, Paperclip, Mic, StopCircle, Trash2, Languages, Globe2, Spar
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth } from '../lib/firebase';
-import { ai } from '../lib/gemini';
 import Markdown from 'react-markdown';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
@@ -134,7 +133,9 @@ export function ChatModule({ user }: { user: any }) {
     }
   };
 
-  const handleSend = async () => {
+  const handleSend = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
     if (isRecording) {
       recognitionRef.current?.stop();
     }
@@ -171,26 +172,55 @@ export function ChatModule({ user }: { user: any }) {
     }
 
     setIsStreaming(true);
-    try {
-      const chat = ai.chats.create({
-        model: "gemini-3-flash-preview",
-        history: messages.map(m => ({
-            role: m.role,
-            parts: [{ text: m.content }]
-        }))
-      });
+    
+    const fetchWithRetry = async (message: string, chatHistory: any[], attempt: number = 1): Promise<string> => {
+      const API_URL = (import.meta as any).env.VITE_API_URL || '';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
-      const response = await chat.sendMessageStream({ message: userMsg });
-      let fullText = '';
-      
-      // We don't save every chunk to DB (too many writes), 
-      // we add one placeholder record and update it at the end 
-      // or simply add the final text to DB.
-      // For best UX in this environment, we'll collect the stream and then write once.
-      
-      for await (const chunk of response) {
-        fullText += (chunk as any).text;
+      try {
+        console.log(`[Chat] Sending request to ${API_URL}/api/chat (Attempt ${attempt})`);
+        const response = await fetch(`${API_URL}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, history: chatHistory }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Server responded with ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.text;
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        
+        if (error.name === 'AbortError') {
+          throw new Error("Request timed out. The AI is taking too long to respond.");
+        }
+
+        // Retry logic for cold starts (502/503/504 errors commonly from Railway/Vercel)
+        if (attempt < 3 && (error.message.includes('500') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+          console.warn(`[Chat] Retrying due to error: ${error.message}`);
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt)); // Exponential backoff
+          return fetchWithRetry(message, chatHistory, attempt + 1);
+        }
+        
+        throw error;
       }
+    };
+
+    try {
+      const history = messages.map(m => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }]
+      }));
+
+      const fullText = await fetchWithRetry(userMsg, history);
 
       await addDoc(collection(db, 'chats', chatId, 'messages'), {
         role: 'model',
@@ -202,8 +232,9 @@ export function ChatModule({ user }: { user: any }) {
         updatedAt: serverTimestamp(),
       });
 
-    } catch (error) {
-      toast.error("AI response failed. Please check your connection.");
+    } catch (error: any) {
+      console.error("[Chat] Error:", error);
+      toast.error(error.message || "AI response failed. Please check your connection.");
     } finally {
       setIsStreaming(false);
     }
@@ -365,7 +396,10 @@ export function ChatModule({ user }: { user: any }) {
 
         {/* Input Bar */}
         <div className="p-6 md:p-10 bg-gradient-to-t from-black via-black/80 to-transparent">
-          <div className="max-w-3xl mx-auto bg-white/[0.08] backdrop-blur-3xl rounded-[2.5rem] p-2 relative border border-white/[0.05]">
+          <form 
+            onSubmit={handleSend}
+            className="max-w-3xl mx-auto bg-white/[0.08] backdrop-blur-3xl rounded-[2.5rem] p-2 relative border border-white/[0.05]"
+          >
             <div className="flex items-end gap-2 pr-2">
               <div className="flex-1 flex flex-col">
                 <textarea
@@ -381,10 +415,11 @@ export function ChatModule({ user }: { user: any }) {
                   className="w-full bg-transparent border-none focus:ring-0 text-[15px] px-5 pt-4 min-h-[56px] max-h-64 resize-none placeholder:text-white/20"
                 />
                 <div className="flex items-center gap-1 px-4 pb-3">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-white/30 hover:text-white hover:bg-white/5 rounded-full">
+                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-white/30 hover:text-white hover:bg-white/5 rounded-full">
                     <Plus className="w-5 h-5" />
                   </Button>
                   <Button 
+                    type="button"
                     variant="ghost" 
                     size="icon" 
                     className={cn(
@@ -399,10 +434,10 @@ export function ChatModule({ user }: { user: any }) {
                 </div>
               </div>
               <Button 
+                type="submit"
                 variant="neon" 
                 size="icon" 
                 className="h-10 w-10 md:h-12 md:w-12 rounded-full mb-1 lg:mb-2.5 shadow-xl shadow-white/20 shrink-0" 
-                onClick={handleSend}
                 disabled={!inputValue.trim() || isStreaming}
               >
                 <div className="bg-white rounded-full p-1.5 shadow-sm">
@@ -410,7 +445,7 @@ export function ChatModule({ user }: { user: any }) {
                 </div>
               </Button>
             </div>
-          </div>
+          </form>
           <p className="text-[10px] text-center mt-3 text-white/20 uppercase tracking-widest font-bold">
             Bhart AI can make mistakes. Verify important info.
           </p>
