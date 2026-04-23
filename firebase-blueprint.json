@@ -124,6 +124,51 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["jobId", "name", "email"]
+    },
+    "Customer": {
+      "title": "Customer / Lead",
+      "description": "A business contact in the CRM.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "company": { "type": "string" },
+        "status": { "type": "string", "enum": ["Lead", "Client", "Lost"] },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Professional billing document.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "items": { "type": "array" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["Draft", "Sent", "Paid"] },
+        "dueDate": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "invoiceNumber", "total"]
+    },
+    "Deal": {
+        "title": "Sales Deal",
+        "description": "Revenue opportunity in the pipeline.",
+        "type": "object",
+        "properties": {
+            "userId": { "type": "string" },
+            "title": { "type": "string" },
+            "value": { "type": "number" },
+            "customerId": { "type": "string" },
+            "status": { "type": "string", "enum": ["New", "Negotiation", "Won", "Lost"] },
+            "createdAt": { "type": "string", "format": "date-time" }
+        }
     }
   },
   "firestore": {
@@ -162,6 +207,18 @@
     "applications/{applicationId}": {
       "schema": "Application",
       "description": "Submitted candidate applications."
+    },
+    "customers/{customerId}": {
+      "schema": "Customer",
+      "description": "CRM customer records."
+    },
+    "invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Business invoices."
+    },
+    "deals/{dealId}": {
+      "schema": "Deal",
+      "description": "Sales pipeline deals."
     }
   }
 }

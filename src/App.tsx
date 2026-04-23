@@ -20,6 +20,7 @@ import { SettingsModule } from './pages/SettingsModule';
 import { HistoryModule } from './pages/HistoryModule';
 import { AboutModule } from './pages/AboutModule';
 import { CareersModule } from './pages/CareersModule';
+import { BusinessModule } from './pages/BusinessModule';
 import { SettingsProvider } from './context/SettingsContext';
 
 export default function App() {
@@ -162,8 +163,9 @@ export default function App() {
       case 'images': return <ImageModule user={user} />;
       case 'wellness':
       case 'edu':
-      case 'business':
         return <SpecializedModule type={activeTab} />;
+      case 'business':
+        return <BusinessModule />;
       case 'settings':
         return <SettingsModule user={user} onLogout={handleLogout} />;
       case 'history':
