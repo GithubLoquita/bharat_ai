@@ -80,6 +80,16 @@
       "properties": {
         "status": { "type": "string" }
       }
+    },
+    "UserSettings": {
+      "title": "User Infrastructure Settings",
+      "description": "Secure storage for encrypted API keys and AI preferences.",
+      "type": "object",
+      "properties": {
+        "keys": { "type": "object" },
+        "preferences": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -106,6 +116,10 @@
     "studio/{promptId}": {
       "schema": "PromptTemplate",
       "description": "User prompt templates."
+    },
+    "users/{userId}/config/{configId}": {
+      "schema": "UserSettings",
+      "description": "Encrypted infrastructure configuration."
     }
   }
 }
